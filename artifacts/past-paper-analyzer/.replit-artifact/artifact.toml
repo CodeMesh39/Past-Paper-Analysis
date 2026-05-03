@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Past Paper Analyzer"
+version = "1.0.0"
+id = "artifacts/past-paper-analyzer"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20511
+
+[services.development]
+run = "pnpm --filter @workspace/past-paper-analyzer run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/past-paper-analyzer", "run", "build" ]
+publicDir = "artifacts/past-paper-analyzer/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20511"
+BASE_PATH = "/"

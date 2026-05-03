@@ -3,20 +3,34 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Past Paper Analyzer API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: papers
+    description: Past paper operations
+  - name: syllabus
+    description: Syllabus operations
+  - name: analysis
+    description: AI analysis operations
+  - name: topics
+    description: Topic operations
+  - name: studyplan
+    description: Study plan operations
+  - name: questions
+    description: Practice question operations
+  - name: dashboard
+    description: Dashboard summary operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +38,440 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /papers:
+    get:
+      operationId: listPapers
+      tags: [papers]
+      summary: List all uploaded papers
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+        - in: query
+          name: year
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of papers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Paper"
+    post:
+      operationId: uploadPaper
+      tags: [papers]
+      summary: Upload a past paper
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadPaperBody"
+      responses:
+        "201":
+          description: Paper uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Paper"
+
+  /papers/{id}:
+    get:
+      operationId: getPaper
+      tags: [papers]
+      summary: Get a paper by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paper details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Paper"
+        "404":
+          description: Paper not found
+    delete:
+      operationId: deletePaper
+      tags: [papers]
+      summary: Delete a paper
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Paper deleted
+
+  /syllabus:
+    get:
+      operationId: listSyllabi
+      tags: [syllabus]
+      summary: List all syllabi
+      responses:
+        "200":
+          description: List of syllabi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Syllabus"
+    post:
+      operationId: uploadSyllabus
+      tags: [syllabus]
+      summary: Upload a syllabus
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadSyllabusBody"
+      responses:
+        "201":
+          description: Syllabus uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Syllabus"
+
+  /syllabus/{id}:
+    get:
+      operationId: getSyllabus
+      tags: [syllabus]
+      summary: Get a syllabus by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Syllabus details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Syllabus"
+
+  /analysis:
+    get:
+      operationId: listAnalyses
+      tags: [analysis]
+      summary: List analyses for a subject
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Analysis"
+    post:
+      operationId: triggerAnalysis
+      tags: [analysis]
+      summary: Trigger AI analysis on uploaded papers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriggerAnalysisBody"
+      responses:
+        "201":
+          description: Analysis started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+
+  /analysis/{id}:
+    get:
+      operationId: getAnalysis
+      tags: [analysis]
+      summary: Get analysis by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+
+  /topics:
+    get:
+      operationId: listTopics
+      tags: [topics]
+      summary: List all topics with scores
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+        - in: query
+          name: analysisId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of topics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Topic"
+
+  /topics/high-yield:
+    get:
+      operationId: getHighYieldTopics
+      tags: [topics]
+      summary: Get high-yield topics ranked by importance
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: High-yield topics leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Topic"
+
+  /studyplan:
+    get:
+      operationId: listStudyPlans
+      tags: [studyplan]
+      summary: List study plans
+      responses:
+        "200":
+          description: List of study plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudyPlan"
+    post:
+      operationId: createStudyPlan
+      tags: [studyplan]
+      summary: Create a study plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStudyPlanBody"
+      responses:
+        "201":
+          description: Study plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyPlan"
+
+  /studyplan/{id}:
+    get:
+      operationId: getStudyPlan
+      tags: [studyplan]
+      summary: Get a study plan by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Study plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyPlan"
+    patch:
+      operationId: updateStudyPlan
+      tags: [studyplan]
+      summary: Update a study plan (mark day complete)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStudyPlanBody"
+      responses:
+        "200":
+          description: Updated study plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudyPlan"
+
+  /questions:
+    get:
+      operationId: listPracticeQuestions
+      tags: [questions]
+      summary: List practice questions
+      parameters:
+        - in: query
+          name: topic
+          schema:
+            type: string
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of practice questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PracticeQuestion"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/topic-frequency:
+    get:
+      operationId: getTopicFrequency
+      tags: [dashboard]
+      summary: Get topic frequency data for charts
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+        - in: query
+          name: analysisId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Topic frequency chart data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopicFrequencyItem"
+
+  /dashboard/year-trends:
+    get:
+      operationId: getYearTrends
+      tags: [dashboard]
+      summary: Get year-wise trend data
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Year-wise trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/YearTrendItem"
+
+  /dashboard/difficulty-distribution:
+    get:
+      operationId: getDifficultyDistribution
+      tags: [dashboard]
+      summary: Get difficulty distribution for pie chart
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+        - in: query
+          name: analysisId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Difficulty distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DifficultyItem"
+
+  /dashboard/syllabus-coverage:
+    get:
+      operationId: getSyllabusCoverage
+      tags: [dashboard]
+      summary: Get syllabus coverage data
+      parameters:
+        - in: query
+          name: subject
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Syllabus coverage data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyllabusCoverage"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +479,331 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    Paper:
+      type: object
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+        year:
+          type: integer
+        fileName:
+          type: string
+        fileType:
+          type: string
+          enum: [pdf, image]
+        extractedText:
+          type: string
+        questionCount:
+          type: integer
+        status:
+          type: string
+          enum: [uploaded, processing, processed, failed]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subject, year, fileName, fileType, status, createdAt]
+
+    UploadPaperBody:
+      type: object
+      properties:
+        subject:
+          type: string
+        year:
+          type: integer
+        file:
+          type: string
+          format: binary
+      required: [subject, year, file]
+
+    Syllabus:
+      type: object
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+        fileName:
+          type: string
+        topics:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subject, fileName, topics, createdAt]
+
+    UploadSyllabusBody:
+      type: object
+      properties:
+        subject:
+          type: string
+        file:
+          type: string
+          format: binary
+      required: [subject, file]
+
+    Analysis:
+      type: object
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        paperIds:
+          type: array
+          items:
+            type: integer
+        syllabusId:
+          type: integer
+        syllabus覆蓋率:
+          type: number
+        topicCount:
+          type: integer
+        questionCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+      required: [id, subject, status, paperIds, createdAt]
+
+    TriggerAnalysisBody:
+      type: object
+      properties:
+        subject:
+          type: string
+        paperIds:
+          type: array
+          items:
+            type: integer
+        syllabusId:
+          type: integer
+      required: [subject, paperIds]
+
+    Topic:
+      type: object
+      properties:
+        id:
+          type: integer
+        analysisId:
+          type: integer
+        name:
+          type: string
+        subject:
+          type: string
+        frequency:
+          type: integer
+        frequencyScore:
+          type: number
+        recencyScore:
+          type: number
+        marksWeightage:
+          type: number
+        importanceScore:
+          type: number
+        questionTypes:
+          type: array
+          items:
+            type: string
+        yearsAppeared:
+          type: array
+          items:
+            type: integer
+        difficultyLevel:
+          type: string
+          enum: [easy, medium, hard]
+        inSyllabus:
+          type: boolean
+      required: [id, analysisId, name, subject, frequency, importanceScore, difficultyLevel]
+
+    StudyPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        subject:
+          type: string
+        examDate:
+          type: string
+          format: date
+        hoursPerDay:
+          type: number
+        totalDays:
+          type: integer
+        analysisId:
+          type: integer
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudyDay"
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, subject, examDate, hoursPerDay, totalDays, days, createdAt]
+
+    StudyDay:
+      type: object
+      properties:
+        day:
+          type: integer
+        date:
+          type: string
+          format: date
+        topics:
+          type: array
+          items:
+            type: string
+        isRevision:
+          type: boolean
+        isCompleted:
+          type: boolean
+        hours:
+          type: number
+      required: [day, date, topics, isRevision, isCompleted, hours]
+
+    CreateStudyPlanBody:
+      type: object
+      properties:
+        subject:
+          type: string
+        examDate:
+          type: string
+          format: date
+        hoursPerDay:
+          type: number
+        analysisId:
+          type: integer
+      required: [subject, examDate, hoursPerDay, analysisId]
+
+    UpdateStudyPlanBody:
+      type: object
+      properties:
+        dayIndex:
+          type: integer
+        isCompleted:
+          type: boolean
+      required: [dayIndex, isCompleted]
+
+    PracticeQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+        topic:
+          type: string
+        subject:
+          type: string
+        questionText:
+          type: string
+        questionType:
+          type: string
+          enum: [theory, numerical, definition, long_answer, mcq]
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        marksAllotted:
+          type: integer
+        sourceYear:
+          type: integer
+        paperId:
+          type: integer
+      required: [id, topic, subject, questionText, questionType, difficulty]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalPapers:
+          type: integer
+        totalTopics:
+          type: integer
+        totalQuestions:
+          type: integer
+        subjectsAnalyzed:
+          type: integer
+        syllabusCoverage:
+          type: number
+        highYieldTopicsCount:
+          type: integer
+        yearsAnalyzed:
+          type: array
+          items:
+            type: integer
+        lastAnalysisDate:
+          type: string
+          format: date-time
+      required: [totalPapers, totalTopics, totalQuestions, subjectsAnalyzed, syllabuscoverage, highYieldTopicsCount, yearsAnalyzed]
+
+    TopicFrequencyItem:
+      type: object
+      properties:
+        topic:
+          type: string
+        frequency:
+          type: integer
+        importanceScore:
+          type: number
+      required: [topic, frequency, importanceScore]
+
+    YearTrendItem:
+      type: object
+      properties:
+        year:
+          type: integer
+        topicCount:
+          type: integer
+        questionCount:
+          type: integer
+        avgDifficulty:
+          type: number
+      required: [year, topicCount, questionCount, avgDifficulty]
+
+    DifficultyItem:
+      type: object
+      properties:
+        difficulty:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+      required: [difficulty, count, percentage]
+
+    SyllabusCoverage:
+      type: object
+      properties:
+        subject:
+          type: string
+        totalTopics:
+          type: integer
+        coveredTopics:
+          type: integer
+        uncoveredTopics:
+          type: integer
+        coveragePercentage:
+          type: number
+        topicDetails:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyllabusTopicDetail"
+      required: [subject, totalTopics, coveredTopics, uncoveredTopics, coveragePercentage, topicDetails]
+
+    SyllabusTopicDetail:
+      type: object
+      properties:
+        topic:
+          type: string
+        covered:
+          type: boolean
+        frequency:
+          type: integer
+      required: [topic, covered, frequency]

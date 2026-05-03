@@ -1,0 +1,98 @@
+Build a full-stack AI-powered web application called "Past Paper Analyzer" for students.
+
+Tech stack:
+
+* Frontend: React + Tailwind CSS + Chart.js
+* Backend: Node.js + Express
+* Database: MongoDB
+* File Upload: Multer
+* PDF parsing: pdf-parse
+* OCR for images: Tesseract.js
+* AI/NLP: OpenAI API (or placeholder AI functions)
+* Deployment-ready structure
+
+Core requirements:
+
+1. Multi-paper upload:
+
+* Allow uploading multiple PDFs and images of past exam papers
+* Support multiple years and subjects
+* Store uploaded files and extracted text
+
+2. AI pattern analysis:
+
+* Extract questions from uploaded papers
+* Detect topic frequency
+* Detect repeated concepts
+* Identify question types (theory, numerical, definitions, long answers)
+* Analyze year-wise trends
+* Detect difficulty level patterns
+
+3. Syllabus cross-referencing:
+
+* Allow syllabus upload as text/PDF
+* Extract syllabus topics
+* Compare paper topics against syllabus
+* Highlight uncovered syllabus areas
+* Show syllabus coverage %
+
+4. Topic importance scoring:
+
+* Rank topics based on:
+
+  * frequency
+  * recency
+  * marks weightage
+* Generate a "High Yield Topics" leaderboard
+
+5. Smart study planner:
+
+* Ask user exam date
+* Ask available study hours per day
+* Auto-generate study plan prioritizing high-yield topics
+* Split topics day-wise
+* Mark revision days
+
+6. Visual analytics dashboard:
+   Create charts:
+
+* topic frequency bar chart
+* year-wise trend line chart
+* difficulty pie chart
+* syllabus coverage heatmap
+* topic importance ranking chart
+
+7. Practice question suggestions:
+
+* Recommend similar practice questions for top topics
+* Group by topic
+
+UI pages:
+
+* Home page
+* Upload papers page
+* Upload syllabus page
+* Analysis dashboard
+* Study planner page
+* Practice questions page
+
+Features:
+
+* Clean responsive UI
+* Drag and drop upload
+* Loading states
+* Error handling
+* Dashboard cards
+* Export study plan as PDF
+
+Project structure:
+Frontend and backend separated properly.
+Generate complete working code.
+Generate package.json files.
+Generate README.md with setup instructions.
+Make code hackathon-ready and deployable.
+
+Priority:
+Focus on working MVP first.
+Use dummy AI logic if API key missing.
+Optimize for speed and functionality.
