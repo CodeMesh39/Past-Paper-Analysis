@@ -20,12 +20,16 @@ const formSchema = z.object({
 export default function UploadSyllabus() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const baseUrl = import.meta.env.BASE_URL;
   const uploadSyllabus = useUploadSyllabus();
   const { data: syllabi, isLoading: isLoadingSyllabi } = useListSyllabi();
 
   const handleDeleteSyllabus = async (id: number) => {
     try {
-      await fetch(`/api/syllabus/${id}`, { method: "DELETE" });
+      const response = await fetch(`${baseUrl}api/syllabus/${id}`, { method: "DELETE" });
+      if (!response.ok && response.status !== 204) {
+        throw new Error("Failed to delete syllabus");
+      }
       queryClient.invalidateQueries({ queryKey: getListSyllabiQueryKey() });
       toast({ title: "Syllabus deleted" });
     } catch {
