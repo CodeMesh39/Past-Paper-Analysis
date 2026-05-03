@@ -85,4 +85,19 @@ router.delete("/syllabus/:id", async (req, res) => {
   }
 });
 
+router.delete("/syllabus/:id", async (req, res) => {
+  try {
+    const params = GetSyllabusParams.parse({ id: Number(req.params.id) });
+    const [deleted] = await db.delete(syllabiTable).where(eq(syllabiTable.id, params.id)).returning();
+    if (!deleted) {
+      res.status(404).json({ error: "Syllabus not found" });
+      return;
+    }
+    res.status(204).send();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Failed to delete syllabus" });
+  }
+});
+
 export default router;
