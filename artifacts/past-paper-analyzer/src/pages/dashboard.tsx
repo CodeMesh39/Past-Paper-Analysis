@@ -28,13 +28,14 @@ export default function Dashboard() {
   
   const { data: analyses } = useListAnalyses();
   const subjects = Array.from(new Set(analyses?.map(a => a.subject) || []));
-  const activeSubject = subject !== "all" ? subject : (subjects.length > 0 ? subjects[0] : undefined);
+  const activeSubject = subject !== "all" ? subject : undefined;
 
-  const { data: summary, isLoading: load1 } = useGetDashboardSummary(activeSubject ? { subject: activeSubject } : {});
-  const { data: topicFreq, isLoading: load2 } = useGetTopicFrequency(activeSubject ? { subject: activeSubject } : {});
-  const { data: yearTrends, isLoading: load3 } = useGetYearTrends(activeSubject ? { subject: activeSubject } : {});
-  const { data: diffDist, isLoading: load4 } = useGetDifficultyDistribution(activeSubject ? { subject: activeSubject } : {});
-  const { data: syllabusCov, isLoading: load5 } = useGetSyllabusCoverage(activeSubject ? { subject: activeSubject } : {});
+  const dashboardParams = activeSubject ? { subject: activeSubject } : {};
+  const { data: summary, isLoading: load1 } = useGetDashboardSummary(dashboardParams);
+  const { data: topicFreq, isLoading: load2 } = useGetTopicFrequency(dashboardParams);
+  const { data: yearTrends, isLoading: load3 } = useGetYearTrends(dashboardParams);
+  const { data: diffDist, isLoading: load4 } = useGetDifficultyDistribution(dashboardParams);
+  const { data: syllabusCov, isLoading: load5 } = useGetSyllabusCoverage(dashboardParams);
 
   const isLoading = load1 || load2 || load3 || load4 || load5;
 
@@ -217,18 +218,18 @@ export default function Dashboard() {
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="font-medium text-sm">Coverage</span>
-                    <span className="font-medium text-sm">{syllabusCov.coveragePercentage}%</span>
+                    <span className="font-medium text-sm">{syllabusCov.percentage}%</span>
                   </div>
-                  <Progress value={syllabusCov.coveragePercentage} className="h-2" />
+                  <Progress value={syllabusCov.percentage} className="h-2" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-muted rounded-lg text-center">
-                    <div className="text-2xl font-bold text-green-600">{syllabusCov.coveredTopics}</div>
+                    <div className="text-2xl font-bold text-green-600">{syllabusCov.covered}</div>
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Covered Topics</div>
                   </div>
                   <div className="p-4 bg-muted rounded-lg text-center">
-                    <div className="text-2xl font-bold text-destructive">{syllabusCov.uncoveredTopics}</div>
+                    <div className="text-2xl font-bold text-destructive">{syllabusCov.uncovered}</div>
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Missing Topics</div>
                   </div>
                 </div>
