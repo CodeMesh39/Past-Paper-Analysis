@@ -218,18 +218,18 @@ export default function Dashboard() {
                 <div>
                   <div className="flex justify-between mb-2">
                     <span className="font-medium text-sm">Coverage</span>
-                    <span className="font-medium text-sm">{syllabusCov.percentage}%</span>
+                    <span className="font-medium text-sm">{summary.syllabusCoverage}%</span>
                   </div>
-                  <Progress value={syllabusCov.percentage} className="h-2" />
+                  <Progress value={summary.syllabusCoverage ?? 0} className="h-2" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 bg-muted rounded-lg text-center">
-                    <div className="text-2xl font-bold text-green-600">{syllabusCov.covered}</div>
+                    <div className="text-2xl font-bold text-green-600">{syllabusCov.coveredTopics}</div>
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Covered Topics</div>
                   </div>
                   <div className="p-4 bg-muted rounded-lg text-center">
-                    <div className="text-2xl font-bold text-destructive">{syllabusCov.uncovered}</div>
+                    <div className="text-2xl font-bold text-destructive">{syllabusCov.uncoveredTopics}</div>
                     <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">Missing Topics</div>
                   </div>
                 </div>
