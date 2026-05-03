@@ -8,6 +8,12 @@ import {
   useGetSyllabusCoverage,
   useListAnalyses,
   useGetHighYieldTopics,
+  getGetDashboardSummaryQueryKey,
+  getGetTopicFrequencyQueryKey,
+  getGetYearTrendsQueryKey,
+  getGetDifficultyDistributionQueryKey,
+  getGetSyllabusCoverageQueryKey,
+  getGetHighYieldTopicsQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +54,12 @@ export default function Dashboard() {
 
   const resetDashboard = () => {
     setSubject("all");
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetTopicFrequencyQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetYearTrendsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetDifficultyDistributionQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetSyllabusCoverageQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetHighYieldTopicsQueryKey() });
   };
 
   if (isLoading) {
