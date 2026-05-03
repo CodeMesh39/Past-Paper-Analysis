@@ -214,8 +214,8 @@ Try the live application here: [Live App](https://6618cd62-30ac-441c-8179-99f58d
 - [x] No hardcoded secrets
 - [x] Export / PDF report feature
 - [x] Error handling and loading states throughout
-- [ ] Demo video link
-- [ ] Live deployment URL
+- [x] Demo video link
+- [x] Live deployment URL
 
 ---
 
