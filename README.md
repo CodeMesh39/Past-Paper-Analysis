@@ -192,9 +192,9 @@ Try the live application here: [Live App](https://6618cd62-30ac-441c-8179-99f58d
 
 ### Screenshots
 
-| Dashboard | Topic Rankings | Study Planner |
-|---|---|---|
-| _Add screenshot_ | _Add screenshot_ | _Add screenshot_ |
+| Home | Dashboard |
+|---|---|
+| ![Home screenshot](@assets/Screenshot_2026-05-03_163752_1777806572029.png) | ![Dashboard screenshot](@assets/Screenshot_2026-05-03_163835_1777806572030.png) |
 
 ---
 
