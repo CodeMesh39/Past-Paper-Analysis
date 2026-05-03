@@ -95,9 +95,9 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" onClick={resetDashboard} className="gap-2 flex-shrink-0">
+          <Button variant="outline" onClick={resetDashboard} className="gap-2 flex-shrink-0" data-testid="button-reset-dashboard">
             <RotateCcw className="w-4 h-4" />
-            Reset
+            Reset to All
           </Button>
         </div>
       </div>
