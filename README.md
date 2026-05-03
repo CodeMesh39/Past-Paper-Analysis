@@ -190,11 +190,15 @@ Watch the full project demo here: [Demo Video](https://drive.google.com/file/d/1
 
 Try the live application here: [Live App](https://6618cd62-30ac-441c-8179-99f58dadb2c1-00-3n6kkwq9aio8i.pike.repl.co/)
 
-### Screenshots
+## Screenshots
 
-| Home | Dashboard |
-|---|---|
-| ![Home screenshot](@assets/Screenshot_2026-05-03_163752_1777806572029.png) | ![Dashboard screenshot](@assets/Screenshot_2026-05-03_163835_1777806572030.png) |
+### Analysis Dashboard
+
+![Analysis Dashboard](./screenshots/dashboard.png)
+
+### Smart Study Planner
+
+![Smart Study Planner](./screenshots/study-planner.png)
 
 ---
 
