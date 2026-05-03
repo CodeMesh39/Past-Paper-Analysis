@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useUploadPaper, useListPapers, getListPapersQueryKey } from "@workspace/api-client-react";
+import { useUploadPaper, useListPapers, useDeletePaper, getListPapersQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -22,9 +22,20 @@ export default function UploadPapers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const uploadPaper = useUploadPaper();
+  const deletePaper = useDeletePaper();
   const { data: papers, isLoading: isLoadingPapers } = useListPapers({});
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deletePaper.mutateAsync({ id });
+      queryClient.invalidateQueries({ queryKey: getListPapersQueryKey() });
+      toast({ title: "Paper deleted" });
+    } catch {
+      toast({ title: "Delete failed", description: "Could not delete the paper.", variant: "destructive" });
+    }
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -182,8 +193,15 @@ export default function UploadPapers() {
                       <Badge variant={paper.status === 'processed' ? 'default' : paper.status === 'failed' ? 'destructive' : 'secondary'}>
                         {paper.status}
                       </Badge>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        disabled={deletePaper.isPending}
+                        onClick={() => handleDelete(paper.id)}
+                        data-testid={`button-delete-paper-${paper.id}`}
+                      >
+                        {deletePaper.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                       </Button>
                     </div>
                   </div>

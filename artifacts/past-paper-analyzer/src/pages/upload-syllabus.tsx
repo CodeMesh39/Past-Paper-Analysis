@@ -22,6 +22,16 @@ export default function UploadSyllabus() {
   const queryClient = useQueryClient();
   const uploadSyllabus = useUploadSyllabus();
   const { data: syllabi, isLoading: isLoadingSyllabi } = useListSyllabi();
+
+  const handleDeleteSyllabus = async (id: number) => {
+    try {
+      await fetch(`/api/syllabus/${id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: getListSyllabiQueryKey() });
+      toast({ title: "Syllabus deleted" });
+    } catch {
+      toast({ title: "Delete failed", description: "Could not delete the syllabus.", variant: "destructive" });
+    }
+  };
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -165,7 +175,13 @@ export default function UploadSyllabus() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteSyllabus(syl.id)}
+                        data-testid={`button-delete-syllabus-${syl.id}`}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
