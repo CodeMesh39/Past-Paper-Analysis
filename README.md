@@ -182,7 +182,9 @@ Base URL: `/api`
 
 ## Demo
 
-> **Demo video:** _[Add your demo video link here]_
+## Demo Video
+
+Watch the full project demo here: [Demo Video](https://drive.google.com/file/d/1iNVfMmjaypDQfRtr-n6AdqDp_JwBB7TX/view?usp=sharing)
 
 > **Live deployment:** _[Add your deployed app URL here]_
 
