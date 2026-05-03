@@ -186,7 +186,9 @@ Base URL: `/api`
 
 Watch the full project demo here: [Demo Video](https://drive.google.com/file/d/1iNVfMmjaypDQfRtr-n6AdqDp_JwBB7TX/view?usp=sharing)
 
-> **Live deployment:** _[Add your deployed app URL here]_
+## Live Deployment
+
+Try the live application here: [Live App](https://6618cd62-30ac-441c-8179-99f58dadb2c1-00-3n6kkwq9aio8i.pike.repl.co/)
 
 ### Screenshots
 
