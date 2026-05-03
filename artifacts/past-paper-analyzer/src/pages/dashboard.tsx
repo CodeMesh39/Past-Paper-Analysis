@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   useGetDashboardSummary, 
   useGetTopicFrequency, 
@@ -26,6 +27,7 @@ const DIFF_COLORS = {
 
 export default function Dashboard() {
   const [subject, setSubject] = useState<string>("all");
+  const queryClient = useQueryClient();
   
   const { data: analyses } = useListAnalyses();
   const subjects = Array.from(new Set(analyses?.map(a => a.subject) || []));
@@ -42,6 +44,7 @@ export default function Dashboard() {
 
   const resetDashboard = () => {
     setSubject("all");
+    queryClient.invalidateQueries();
   };
 
   if (isLoading) {
