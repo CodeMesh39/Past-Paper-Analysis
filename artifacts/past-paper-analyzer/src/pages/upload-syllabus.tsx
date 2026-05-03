@@ -165,7 +165,7 @@ export default function UploadSyllabus() {
                 <CardDescription>Syllabi registered for cross-referencing with past papers.</CardDescription>
               </div>
               {syllabi && syllabi.length > 0 && (
-                <Badge variant="secondary">{syllabi.length} syllabu{syllabi.length !== 1 ? "ses" : "s"}</Badge>
+                <Badge variant="secondary">{syllabi.length} syllabus{syllabi.length !== 1 ? "es" : ""}</Badge>
               )}
             </div>
           </CardHeader>
