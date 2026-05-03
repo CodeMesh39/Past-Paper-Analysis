@@ -31,20 +31,40 @@ router.post("/studyplan", async (req, res) => {
 
     const examDate = new Date(body.examDate);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const totalDays = Math.max(1, Math.ceil((examDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-    const topicNames = topics.map((t) => t.name);
-    const regularDays = Math.max(1, totalDays - 2);
-    const topicsPerDay = Math.ceil(topicNames.length / regularDays);
+
+    const highPriority = topics.filter((t) => t.importanceScore >= 7);
+    const medPriority = topics.filter((t) => t.importanceScore >= 4 && t.importanceScore < 7);
+    const lowPriority = topics.filter((t) => t.importanceScore < 4);
+
+    const studyDays = Math.max(1, totalDays - Math.max(2, Math.floor(totalDays * 0.15)));
+    const revisionDays = totalDays - studyDays;
+
+    const orderedTopics = [...highPriority, ...medPriority, ...lowPriority];
+    const topicsPerDay = Math.ceil(orderedTopics.length / studyDays);
+    const hoursPerTopic = body.hoursPerDay / Math.max(topicsPerDay, 1);
+
     const days: StudyDay[] = [];
     let topicIndex = 0;
+
     for (let d = 0; d < totalDays; d++) {
       const date = new Date(today);
       date.setDate(today.getDate() + d);
-      const isRevision = d >= totalDays - 2;
-      const dayTopics = isRevision
-        ? topicNames.slice(0, Math.ceil(topicNames.length / 2))
-        : topicNames.slice(topicIndex, topicIndex + topicsPerDay);
-      if (!isRevision) topicIndex += topicsPerDay;
+      const isRevision = d >= studyDays;
+
+      let dayTopics: string[];
+      if (isRevision) {
+        const revisionIndex = d - studyDays;
+        const chunkSize = Math.ceil(orderedTopics.length / revisionDays);
+        const start = revisionIndex * chunkSize;
+        dayTopics = orderedTopics.slice(start, start + chunkSize).map((t) => t.name);
+        if (dayTopics.length === 0) dayTopics = highPriority.slice(0, 5).map((t) => t.name);
+      } else {
+        dayTopics = orderedTopics.slice(topicIndex, topicIndex + topicsPerDay).map((t) => t.name);
+        topicIndex += topicsPerDay;
+      }
+
       days.push({
         day: d + 1,
         date: date.toISOString().split("T")[0],
@@ -54,9 +74,11 @@ router.post("/studyplan", async (req, res) => {
         hours: body.hoursPerDay,
       });
     }
+
     const examDateStr = body.examDate instanceof Date
       ? body.examDate.toISOString().split("T")[0]
       : String(body.examDate);
+
     const [plan] = await db.insert(studyPlansTable).values({
       subject: body.subject,
       examDate: examDateStr,
@@ -97,12 +119,33 @@ router.patch("/studyplan/:id", async (req, res) => {
       return;
     }
     const days = plan.days as StudyDay[];
-    days[body.dayIndex] = { ...days[body.dayIndex], isCompleted: body.isCompleted };
+    if (body.dayIndex >= 0 && body.dayIndex < days.length) {
+      days[body.dayIndex] = { ...days[body.dayIndex], isCompleted: body.isCompleted };
+    }
     const [updated] = await db.update(studyPlansTable).set({ days }).where(eq(studyPlansTable.id, params.id)).returning();
     res.json(updated);
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Failed to update study plan" });
+  }
+});
+
+router.delete("/studyplan/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid plan ID" });
+      return;
+    }
+    const [deleted] = await db.delete(studyPlansTable).where(eq(studyPlansTable.id, id)).returning();
+    if (!deleted) {
+      res.status(404).json({ error: "Study plan not found" });
+      return;
+    }
+    res.status(204).send();
+  } catch (err) {
+    req.log.error(err);
+    res.status(500).json({ error: "Failed to delete study plan" });
   }
 });
 

@@ -13,12 +13,14 @@ import Dashboard from "@/pages/dashboard";
 import Topics from "@/pages/topics";
 import Planner from "@/pages/planner";
 import Questions from "@/pages/questions";
+import Export from "@/pages/export";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: false,
+      retry: 1,
+      staleTime: 30_000,
     },
   },
 });
@@ -35,6 +37,7 @@ function Router() {
         <Route path="/topics" component={Topics} />
         <Route path="/planner" component={Planner} />
         <Route path="/questions" component={Questions} />
+        <Route path="/export" component={Export} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

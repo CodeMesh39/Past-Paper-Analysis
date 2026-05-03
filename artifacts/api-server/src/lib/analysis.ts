@@ -20,6 +20,7 @@ interface AITopic {
   yearsAppeared: number[];
   difficultyLevel: "easy" | "medium" | "hard";
   inSyllabus: boolean;
+  patternNotes: string;
   practiceQuestions: Array<{
     questionText: string;
     questionType: "theory" | "numerical" | "definition" | "long_answer" | "mcq";
@@ -40,51 +41,67 @@ export async function runAnalysis(analysisId: number, paperIds: number[], syllab
     }
 
     const subject = papers[0]?.subject ?? "Unknown";
+    const years = papers.map((p) => p.year).sort();
+    const mostRecentYear = Math.max(...years);
+
     const paperSummaries = papers.map((p) => {
       const text = p.extractedText ?? "(no extracted text — image file)";
-      return `Year ${p.year} — ${p.fileName}:\n${text.slice(0, 2000)}`;
-    }).join("\n\n---\n\n");
+      return `=== Year ${p.year} — ${p.fileName} ===\n${text.slice(0, 3000)}`;
+    }).join("\n\n");
 
     const syllabusContext = syllabusTopics.length
-      ? `\nSyllabus topics: ${syllabusTopics.slice(0, 40).join(", ")}`
-      : "";
+      ? `\n\nSyllabus topics (${syllabusTopics.length} total): ${syllabusTopics.slice(0, 60).join(", ")}`
+      : "\n\n(No syllabus provided — mark all topics inSyllabus: false)";
 
-    const prompt = `You are an expert exam analyst. Analyze these past exam papers for the subject "${subject}" and extract the most important topics.${syllabusContext}
+    const prompt = `You are an expert exam analyst and educator. Analyze these past exam papers for "${subject}" and extract a comprehensive topic analysis.
+${syllabusContext}
 
-Papers:
+Papers (years ${years.join(", ")}, most recent: ${mostRecentYear}):
 ${paperSummaries}
 
-Return a JSON object with a "topics" array. Each topic must have:
-- name (string): concise topic name
-- frequency (number): how many times it appeared across papers (1-${papers.length})
-- frequencyScore (number 0-10): normalized frequency score
-- recencyScore (number 0-10): higher if appeared in more recent years
-- marksWeightage (number 0-10): estimated marks importance
-- importanceScore (number 0-10): overall priority for studying
-- questionTypes (string[]): types like ["theory", "numerical", "definition", "long_answer", "mcq"]
-- yearsAppeared (number[]): list of years this topic appeared
-- difficultyLevel ("easy"|"medium"|"hard")
-- inSyllabus (boolean): whether this matches the provided syllabus
-- practiceQuestions (array of 1-3 questions): each with questionText, questionType, difficulty, marksAllotted (number)
+Return a JSON object with a "topics" array and a "summary" object. Each topic must have:
+- name (string): concise, specific topic name (2-5 words)
+- frequency (number): how many papers this topic appeared in (1–${papers.length})
+- frequencyScore (number 0–10): normalized frequency score
+- recencyScore (number 0–10): 10 = appeared in ${mostRecentYear}, decreasing for older years only
+- marksWeightage (number 0–10): estimated marks importance based on question marks
+- importanceScore (number 0–10): weighted formula: (frequencyScore*0.4 + recencyScore*0.35 + marksWeightage*0.25)
+- questionTypes (string[]): subset of ["theory","numerical","definition","long_answer","mcq","case_study","diagram"]
+- yearsAppeared (number[]): exact years this topic appeared
+- difficultyLevel ("easy"|"medium"|"hard"): based on question complexity
+- inSyllabus (boolean): true only if it clearly matches the syllabus topics above
+- patternNotes (string): 1 sentence noting if it repeats every year, alternates, etc.
+- practiceQuestions: array of 3–5 realistic exam-style questions, each with:
+  - questionText (string): complete question as it would appear in an exam
+  - questionType ("theory"|"numerical"|"definition"|"long_answer"|"mcq")
+  - difficulty ("easy"|"medium"|"hard")
+  - marksAllotted (number): realistic exam mark allocation (2, 4, 5, 8, 10, etc.)
 
-Extract 10-20 topics. Respond with ONLY valid JSON.`;
+The "summary" object must have:
+- totalTopicsFound (number)
+- dominantQuestionType (string): most common question type
+- averageDifficulty ("easy"|"medium"|"hard")
+- marksDistribution: {easy: number, medium: number, hard: number} as percentages
+- keyPatterns (string[]): 2–3 sentences about recurring exam patterns
+
+Extract 12–20 topics. Prioritize topics that repeat across multiple years. Respond with ONLY valid JSON.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
-      max_tokens: 4000,
+      max_tokens: 6000,
     });
 
     const content = completion.choices[0]?.message?.content;
     if (!content) throw new Error("Empty AI response");
 
-    const parsed = JSON.parse(content) as { topics: AITopic[] };
+    const parsed = JSON.parse(content) as { topics: AITopic[]; summary?: Record<string, unknown> };
     const aiTopics: AITopic[] = parsed.topics ?? [];
 
     let totalQuestions = 0;
     for (const t of aiTopics) {
-      const [inserted] = await db.insert(topicsTable).values({
+      await db.insert(topicsTable).values({
         analysisId,
         name: t.name,
         subject,
@@ -107,16 +124,16 @@ Extract 10-20 topics. Respond with ONLY valid JSON.`;
           questionType: q.questionType,
           difficulty: q.difficulty,
           marksAllotted: q.marksAllotted,
-          sourceYear: t.yearsAppeared[0] ?? null,
+          sourceYear: t.yearsAppeared[t.yearsAppeared.length - 1] ?? null,
           paperId: paperIds[0] ?? null,
         });
         totalQuestions++;
       }
     }
 
-    const inSyllabus = aiTopics.filter((t) => t.inSyllabus).length;
+    const inSyllabusCount = aiTopics.filter((t) => t.inSyllabus).length;
     const syllabusCoverage = aiTopics.length > 0
-      ? (inSyllabus / aiTopics.length) * 100
+      ? Math.round((inSyllabusCount / aiTopics.length) * 100)
       : null;
 
     await db.update(papersTable)
@@ -131,9 +148,12 @@ Extract 10-20 topics. Respond with ONLY valid JSON.`;
       completedAt: new Date(),
     }).where(eq(analysesTable.id, analysisId));
 
-    logger.info({ analysisId, topicCount: aiTopics.length }, "Analysis completed");
+    logger.info({ analysisId, topicCount: aiTopics.length, totalQuestions }, "Analysis completed");
   } catch (err) {
     logger.error({ analysisId, err }, "Analysis failed");
     await db.update(analysesTable).set({ status: "failed" }).where(eq(analysesTable.id, analysisId));
+    await db.update(papersTable)
+      .set({ status: "uploaded" })
+      .where(inArray(papersTable.id, paperIds));
   }
 }

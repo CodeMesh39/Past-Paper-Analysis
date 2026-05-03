@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "../lib/db";
-import { papersTable, analysesTable, topicsTable } from "@workspace/db";
+import { papersTable, analysesTable, topicsTable, practiceQuestionsTable } from "@workspace/db";
 import {
   GetDashboardSummaryQueryParams,
   GetTopicFrequencyQueryParams,
@@ -17,23 +17,32 @@ router.get("/dashboard/summary", async (req, res) => {
     const query = GetDashboardSummaryQueryParams.parse(req.query);
     const paperConditions = query.subject ? [eq(papersTable.subject, query.subject)] : [];
     const papers = await db.select().from(papersTable).where(paperConditions.length ? and(...paperConditions) : undefined);
+
     const analysisConditions = query.subject ? [eq(analysesTable.subject, query.subject)] : [];
     const analyses = await db.select().from(analysesTable).where(analysisConditions.length ? and(...analysisConditions) : undefined);
     const completedAnalyses = analyses.filter((a) => a.status === "completed");
+
     const topicConditions = query.subject ? [eq(topicsTable.subject, query.subject)] : [];
     const topics = await db.select().from(topicsTable).where(topicConditions.length ? and(...topicConditions) : undefined);
+
+    const questionConditions = query.subject ? [eq(practiceQuestionsTable.subject, query.subject)] : [];
+    const questions = await db.select().from(practiceQuestionsTable).where(questionConditions.length ? and(...questionConditions) : undefined);
+
     const totalTopics = topics.length;
-    const syllabusCoverage = totalTopics > 0
-      ? Math.round((topics.filter((t) => t.inSyllabus).length / totalTopics) * 100)
-      : 0;
-    const avgImportance = totalTopics > 0
-      ? topics.reduce((sum, t) => sum + t.importanceScore, 0) / totalTopics
-      : 0;
+    const highYieldTopicsCount = topics.filter((t) => t.importanceScore >= 7).length;
+    const inSyllabus = topics.filter((t) => t.inSyllabus).length;
+    const syllabusCoverage = totalTopics > 0 ? Math.round((inSyllabus / totalTopics) * 100) : 0;
+    const avgImportance = totalTopics > 0 ? topics.reduce((sum, t) => sum + t.importanceScore, 0) / totalTopics : 0;
+    const subjectsAnalyzed = Array.from(new Set(completedAnalyses.map((a) => a.subject))).length;
+
     res.json({
       totalPapers: papers.length,
       analyzedPapers: papers.filter((p) => p.status === "processed").length,
+      subjectsAnalyzed,
       totalTopics,
-      highYieldTopics: topics.filter((t) => t.importanceScore >= 7).length,
+      totalQuestions: questions.length,
+      highYieldTopicsCount,
+      highYieldTopics: highYieldTopicsCount,
       syllabusCoverage,
       avgImportanceScore: Math.round(avgImportance * 10) / 10,
       totalAnalyses: analyses.length,
@@ -52,9 +61,15 @@ router.get("/dashboard/topic-frequency", async (req, res) => {
     if (query.subject) conditions.push(eq(topicsTable.subject, query.subject));
     if (query.analysisId) conditions.push(eq(topicsTable.analysisId, query.analysisId));
     const topics = conditions.length
-      ? await db.select().from(topicsTable).where(and(...conditions)).orderBy(desc(topicsTable.frequency)).limit(20)
-      : await db.select().from(topicsTable).orderBy(desc(topicsTable.frequency)).limit(20);
-    res.json(topics.map((t) => ({ topic: t.name, frequency: t.frequency, importanceScore: t.importanceScore })));
+      ? await db.select().from(topicsTable).where(and(...conditions)).orderBy(desc(topicsTable.importanceScore)).limit(15)
+      : await db.select().from(topicsTable).orderBy(desc(topicsTable.importanceScore)).limit(15);
+    res.json(topics.map((t) => ({
+      topic: t.name,
+      frequency: t.frequency,
+      importanceScore: t.importanceScore,
+      difficultyLevel: t.difficultyLevel,
+      marksWeightage: t.marksWeightage,
+    })));
   } catch (err) {
     req.log.error(err);
     res.status(500).json({ error: "Failed to get topic frequency" });
@@ -64,15 +79,31 @@ router.get("/dashboard/topic-frequency", async (req, res) => {
 router.get("/dashboard/year-trends", async (req, res) => {
   try {
     const query = GetYearTrendsQueryParams.parse(req.query);
-    const conditions = query.subject ? [eq(papersTable.subject, query.subject)] : [];
-    const papers = conditions.length
-      ? await db.select().from(papersTable).where(and(...conditions))
+    const paperConditions = query.subject ? [eq(papersTable.subject, query.subject)] : [];
+    const papers = paperConditions.length
+      ? await db.select().from(papersTable).where(and(...paperConditions))
       : await db.select().from(papersTable);
-    const byYear: Record<number, { year: number; papers: number; questions: number }> = {};
+
+    const topicConditions = query.subject ? [eq(topicsTable.subject, query.subject)] : [];
+    const topics = topicConditions.length
+      ? await db.select().from(topicsTable).where(and(...topicConditions))
+      : await db.select().from(topicsTable);
+
+    const byYear: Record<number, { year: number; papers: number; questions: number; avgImportance: number; topicCount: number }> = {};
     for (const p of papers) {
-      if (!byYear[p.year]) byYear[p.year] = { year: p.year, papers: 0, questions: 0 };
+      if (!byYear[p.year]) byYear[p.year] = { year: p.year, papers: 0, questions: 0, avgImportance: 0, topicCount: 0 };
       byYear[p.year].papers += 1;
       byYear[p.year].questions += p.questionCount ?? 0;
+    }
+    for (const t of topics) {
+      for (const year of t.yearsAppeared) {
+        if (!byYear[year]) byYear[year] = { year, papers: 0, questions: 0, avgImportance: 0, topicCount: 0 };
+        byYear[year].avgImportance += t.importanceScore;
+        byYear[year].topicCount += 1;
+      }
+    }
+    for (const y of Object.values(byYear)) {
+      if (y.topicCount > 0) y.avgImportance = Math.round((y.avgImportance / y.topicCount) * 10) / 10;
     }
     res.json(Object.values(byYear).sort((a, b) => a.year - b.year));
   } catch (err) {
@@ -113,11 +144,17 @@ router.get("/dashboard/syllabus-coverage", async (req, res) => {
     const total = topics.length;
     const covered = topics.filter((t) => t.inSyllabus).length;
     const uncovered = total - covered;
+    const missingTopics = topics.filter((t) => !t.inSyllabus).sort((a, b) => b.importanceScore - a.importanceScore).slice(0, 10).map((t) => ({ name: t.name, importanceScore: t.importanceScore, difficultyLevel: t.difficultyLevel }));
+    const coveredList = topics.filter((t) => t.inSyllabus).sort((a, b) => b.importanceScore - a.importanceScore).slice(0, 10).map((t) => ({ name: t.name, importanceScore: t.importanceScore }));
     res.json({
       total,
       covered,
       uncovered,
+      coveredTopics: covered,
+      uncoveredTopics: uncovered,
       percentage: total > 0 ? Math.round((covered / total) * 100) : 0,
+      missingTopics,
+      coveredList,
     });
   } catch (err) {
     req.log.error(err);

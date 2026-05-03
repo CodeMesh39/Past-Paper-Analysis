@@ -8,6 +8,7 @@ import {
 } from "@workspace/api-zod";
 import { eq } from "drizzle-orm";
 import { runAnalysis } from "../lib/analysis";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
@@ -35,7 +36,7 @@ router.post("/analysis", async (req, res) => {
     }).returning();
     res.status(202).json(analysis);
     runAnalysis(analysis.id, body.paperIds, body.syllabusId ?? null).catch((err) => {
-      console.error("Analysis failed", err);
+      logger.error({ analysisId: analysis.id, err }, "Background analysis failed");
     });
   } catch (err) {
     req.log.error(err);
