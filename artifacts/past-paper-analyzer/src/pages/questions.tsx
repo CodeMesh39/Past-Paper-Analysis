@@ -47,7 +47,7 @@ export default function Questions() {
             <SelectValue placeholder="All Subjects" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Subjects</SelectItem>
+            <SelectItem value="all">All Subjects</SelectItem>
             {subjects.map(s => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
@@ -59,7 +59,7 @@ export default function Questions() {
             <SelectValue placeholder="All Topics" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Topics</SelectItem>
+            <SelectItem value="all">All Topics</SelectItem>
             {uniqueTopics.map(t => (
               <SelectItem key={t} value={t}>{t}</SelectItem>
             ))}
