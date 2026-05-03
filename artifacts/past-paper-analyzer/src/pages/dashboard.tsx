@@ -8,12 +8,13 @@ import {
   useListAnalyses
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell
 } from "recharts";
-import { Loader2, TrendingUp, AlertTriangle, BookOpen, Target } from "lucide-react";
+import { Loader2, TrendingUp, AlertTriangle, BookOpen, Target, RotateCcw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
@@ -38,6 +39,10 @@ export default function Dashboard() {
   const { data: syllabusCov, isLoading: load5 } = useGetSyllabusCoverage(dashboardParams);
 
   const isLoading = load1 || load2 || load3 || load4 || load5;
+
+  const resetDashboard = () => {
+    setSubject("all");
+  };
 
   if (isLoading) {
     return (
@@ -78,6 +83,11 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
         </div>
+
+        <Button variant="outline" onClick={resetDashboard} className="gap-2">
+          <RotateCcw className="w-4 h-4" />
+          Reset
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -165,11 +175,10 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="year" />
                   <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
                   <RechartsTooltip contentStyle={{backgroundColor: 'var(--popover)', borderColor: 'var(--border)', borderRadius: '8px'}} />
                   <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="questionCount" name="Questions" stroke="var(--color-primary)" strokeWidth={2} />
-                  <Line yAxisId="right" type="monotone" dataKey="avgDifficulty" name="Avg Difficulty" stroke="var(--color-chart-2)" strokeWidth={2} />
+                  <Line yAxisId="left" type="monotone" dataKey="papers" name="Papers" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
+                  <Line yAxisId="left" type="monotone" dataKey="questions" name="Questions" stroke="var(--color-chart-2)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
