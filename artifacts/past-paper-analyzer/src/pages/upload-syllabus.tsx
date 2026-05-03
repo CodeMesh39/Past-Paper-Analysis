@@ -23,7 +23,8 @@ export default function UploadSyllabus() {
   const queryClient = useQueryClient();
   const baseUrl = import.meta.env.BASE_URL;
   const uploadSyllabus = useUploadSyllabus();
-  const { data: syllabi, isLoading: isLoadingSyllabi } = useListSyllabi();
+  const syllabiQuery = useListSyllabi();
+  const { data: syllabi, isLoading: isLoadingSyllabi } = syllabiQuery;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -33,7 +34,7 @@ export default function UploadSyllabus() {
     try {
       const response = await fetch(`${baseUrl}api/syllabus/${id}`, { method: "DELETE" });
       if (!response.ok && response.status !== 204) throw new Error("Failed to delete syllabus");
-      queryClient.invalidateQueries({ queryKey: getListSyllabiQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: syllabiQuery.queryKey });
       toast({ title: "Syllabus deleted" });
     } catch {
       toast({ title: "Delete failed", description: "Could not delete the syllabus.", variant: "destructive" });
@@ -55,7 +56,7 @@ export default function UploadSyllabus() {
       toast({ title: "Syllabus uploaded", description: "Your syllabus has been processed." });
       form.reset();
       setSelectedFile(null);
-      queryClient.invalidateQueries({ queryKey: getListSyllabiQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: syllabiQuery.queryKey });
     } catch {
       toast({ title: "Upload failed", description: "There was an error uploading your syllabus.", variant: "destructive" });
     }
