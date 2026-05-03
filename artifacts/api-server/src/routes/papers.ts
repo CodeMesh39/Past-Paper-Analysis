@@ -5,10 +5,10 @@ import { db } from "../lib/db";
 import { papersTable } from "@workspace/db";
 import {
   ListPapersQueryParams,
-  UploadPaperBody,
   GetPaperParams,
   DeletePaperParams,
 } from "@workspace/api-zod";
+import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -30,17 +30,21 @@ router.get("/papers", async (req, res) => {
   }
 });
 
+const uploadPaperBodySchema = z.object({
+  subject: z.string().min(1),
+  year: z.coerce.number().int().min(1900).max(new Date().getFullYear() + 1),
+});
+
 router.post("/papers", upload.single("file"), async (req, res) => {
   try {
-    const body = UploadPaperBody.parse({
-      subject: req.body.subject,
-      year: Number(req.body.year),
-      file: req.file,
-    });
     if (!req.file) {
       res.status(400).json({ error: "File is required" });
       return;
     }
+    const body = uploadPaperBodySchema.parse({
+      subject: req.body.subject,
+      year: req.body.year,
+    });
     const fileType = req.file.mimetype === "application/pdf" ? "pdf" : "image";
     let extractedText: string | null = null;
     if (fileType === "pdf") {

@@ -3,10 +3,8 @@ import multer from "multer";
 import pdfParse from "pdf-parse";
 import { db } from "../lib/db";
 import { syllabiTable } from "@workspace/db";
-import {
-  UploadSyllabusBody,
-  GetSyllabusParams,
-} from "@workspace/api-zod";
+import { GetSyllabusParams } from "@workspace/api-zod";
+import { z } from "zod";
 import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -22,16 +20,19 @@ router.get("/syllabus", async (req, res) => {
   }
 });
 
+const uploadSyllabusBodySchema = z.object({
+  subject: z.string().min(1),
+});
+
 router.post("/syllabus", upload.single("file"), async (req, res) => {
   try {
-    const body = UploadSyllabusBody.parse({
-      subject: req.body.subject,
-      file: req.file,
-    });
     if (!req.file) {
       res.status(400).json({ error: "File is required" });
       return;
     }
+    const body = uploadSyllabusBodySchema.parse({
+      subject: req.body.subject,
+    });
     let topics: string[] = [];
     if (req.file.mimetype === "application/pdf") {
       try {
